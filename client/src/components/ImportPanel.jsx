@@ -4,7 +4,7 @@ import { api } from '../api.js';
 export default function ImportPanel({ onImported }) {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState('');
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(25);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -58,7 +58,7 @@ export default function ImportPanel({ onImported }) {
               <input
                 type="number"
                 min="1"
-                max="10"
+                max="25"
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
               />

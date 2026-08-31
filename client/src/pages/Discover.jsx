@@ -69,7 +69,7 @@ export default function Discover() {
     const importTerm = currentSearchTerm();
     if (user && importTerm) {
       try {
-        await api.importPodcasts(importTerm, 5);
+        await api.importPodcasts(importTerm, 25);
       } catch {
         // Live source may be down or return nothing for this term — the
         // search below still runs against whatever's already in the catalog.

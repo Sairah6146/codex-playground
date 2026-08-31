@@ -137,7 +137,7 @@ show's own RSS feed for recent episodes, and inserts them with `is_demo = 0`.
 curl -X POST http://localhost:4000/api/admin/import-podcasts \
   -H "Authorization: Bearer <your JWT>" \
   -H "Content-Type: application/json" \
-  -d '{"term": "artificial intelligence", "limit": 5}'
+  -d '{"term": "artificial intelligence", "limit": 25}'
 ```
 
 It deliberately doesn't invent fields the source doesn't provide — geography,

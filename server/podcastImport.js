@@ -16,7 +16,7 @@ const { safeFetch } = require('./lib/safeFetch');
 const { insertPodcastRecords } = require('./db/podcastStore');
 
 const APPLE_SEARCH_URL = 'https://itunes.apple.com/search';
-const MAX_RESULTS = 10;
+const MAX_RESULTS = 25;
 const MAX_EPISODES_PER_SHOW = 5;
 
 // Conservative genre -> subject mapping: only mapped where an iTunes
@@ -112,32 +112,38 @@ async function fetchFeed(feedUrl) {
  * @param {{ term: string, limit?: number }} params
  * @returns {Promise<{ imported: number, names: string[], skipped: { name: string, reason: string }[] }>}
  */
-async function importPodcasts(db, { term, limit = 5 } = {}) {
+async function importPodcasts(db, { term, limit = 25 } = {}) {
   if (!term || !term.trim()) throw new Error('A search term is required.');
-  const capped = Math.max(1, Math.min(MAX_RESULTS, Number(limit) || 5));
+  const capped = Math.max(1, Math.min(MAX_RESULTS, Number(limit) || 25));
 
   const existingSlugs = new Set(db.prepare('SELECT slug FROM podcasts').all().map((r) => r.slug));
 
   const results = await searchApplePodcasts(term.trim(), capped);
+
+  // Fetch every result's feed concurrently rather than one at a time — at
+  // up to 25 results, a sequential loop's total wait time is the *sum* of
+  // every feed's latency and risks the function's own execution timeout;
+  // in parallel it's bounded by the single slowest fetch instead (capped
+  // by safeFetch's per-request timeout either way).
+  const feedOutcomes = await Promise.allSettled(
+    results.map((r) => (r.feedUrl && r.trackName
+      ? fetchFeed(r.feedUrl)
+      : Promise.reject(new Error('missing name or feed URL'))))
+  );
+
   const records = [];
   const skipped = [];
 
-  for (const r of results) {
-    if (!r.feedUrl || !r.trackName) {
-      skipped.push({ name: r.trackName || '(unnamed)', reason: 'missing name or feed URL' });
-      continue;
+  results.forEach((r, i) => {
+    const outcome = feedOutcomes[i];
+    if (outcome.status === 'rejected') {
+      skipped.push({ name: r.trackName || '(unnamed)', reason: `feed fetch failed: ${outcome.reason.message}` });
+      return;
     }
-
-    let feed;
-    try {
-      feed = await fetchFeed(r.feedUrl);
-    } catch (err) {
-      skipped.push({ name: r.trackName, reason: `feed fetch failed: ${err.message}` });
-      continue;
-    }
+    const feed = outcome.value;
     if (!feed.episodes.length) {
       skipped.push({ name: r.trackName, reason: 'feed had no usable episodes' });
-      continue;
+      return;
     }
 
     const baseSlug = slugify(r.trackName) || `podcast-${Date.now()}`;
@@ -174,7 +180,7 @@ async function importPodcasts(db, { term, limit = 5 } = {}) {
       audiences: [],
       episodes: feed.episodes,
     });
-  }
+  });
 
   const insertedIds = records.length ? insertPodcastRecords(db, records) : [];
   return { imported: insertedIds.length, names: records.map((r) => r.name), skipped };
