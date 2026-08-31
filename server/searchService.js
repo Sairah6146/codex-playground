@@ -244,6 +244,7 @@ function shapeResult(bundle, match) {
  *   culture       string
  *   profile       guest profile object (feeds the "story" dimension)
  *   filters       { reach, format, audienceType, country, minScore, acceptsGuests, hasVideo }
+ *   excludeDemo   when true, drops is_demo rows before scoring/filtering
  */
 function search(db, params = {}) {
   const ctx = getSearchContext(db);
@@ -261,6 +262,8 @@ function search(db, params = {}) {
   const filters = params.filters || {};
 
   let bundles = loadPodcastBundles(db);
+
+  if (params.excludeDemo) bundles = bundles.filter((p) => !p.is_demo);
 
   if (name) {
     const n = norm(name);

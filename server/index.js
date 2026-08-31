@@ -167,6 +167,7 @@ app.get('/api/search', optionalAuth, (req, res) => {
     geo,
     culture: q.culture || null,
     profile,
+    excludeDemo: true,
     filters: {
       reach: q.reach || null,
       format: q.format || null,

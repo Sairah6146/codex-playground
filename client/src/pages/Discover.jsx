@@ -256,7 +256,11 @@ export default function Discover() {
 
       <div className="results-grid">
         {results?.length === 0 && (
-          <div className="empty-state">No podcasts matched that search yet. Try a broader subject or fewer filters.</div>
+          <div className="empty-state">
+            {user
+              ? "No real podcasts matched that yet. Try a broader or different search term — each search pulls in new real results from Apple's directory."
+              : 'No podcasts matched that search yet. Sign in to have search also pull in real podcasts for this topic.'}
+          </div>
         )}
         {results?.map((podcast) => (
           <ResultCard
