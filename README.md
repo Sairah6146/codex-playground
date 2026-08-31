@@ -85,7 +85,9 @@ npm run test:engine
 
 ## Running it
 
-Requires Node 18+.
+Requires Node 22.5+ (the database uses the built-in `node:sqlite` module —
+no native dependency to compile, which is also why it deploys cleanly to
+serverless platforms like Netlify Functions).
 
 ```bash
 # 1. Backend deps + first-run seed

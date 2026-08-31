@@ -2,16 +2,16 @@
 
 const path = require('path');
 const fs = require('fs');
-const Database = require('better-sqlite3');
+const { DatabaseSync } = require('node:sqlite');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'podcast_connect.db');
 
 let db = null;
 
 function bootstrap() {
-  const instance = new Database(DB_PATH);
-  instance.pragma('journal_mode = WAL');
-  instance.pragma('foreign_keys = ON');
+  const instance = new DatabaseSync(DB_PATH);
+  instance.exec('PRAGMA journal_mode = WAL');
+  instance.exec('PRAGMA foreign_keys = ON');
 
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   instance.exec(schema);

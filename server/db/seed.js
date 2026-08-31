@@ -267,57 +267,68 @@ const PODCASTS = [
 ];
 
 function run(db) {
-  const insertSubject = db.prepare('INSERT OR IGNORE INTO subjects (slug, name) VALUES (?, ?)');
-  const tx = db.transaction(() => {
-    for (const s of SUBJECTS) insertSubject.run(s.slug, s.name);
-
-    const insertRelation = db.prepare(
-      'INSERT OR IGNORE INTO subject_relations (subject_slug, related_slug, weight) VALUES (?, ?, ?)'
-    );
-    for (const [from, to, weight] of SUBJECT_RELATIONS) insertRelation.run(from, to, weight);
-
-    const subjectIdBySlug = new Map(
-      db.prepare('SELECT id, slug FROM subjects').all().map((r) => [r.slug, r.id])
-    );
-
-    const insertPodcast = db.prepare(`
-      INSERT INTO podcasts (
-        name, slug, description, network, format, interview_style, geo_reach,
-        country, state, city, location, cultural_focus, audience_desc,
-        reach_estimate, accepts_guests, guest_submission_url, public_contact,
-        has_video, artwork_url, website_url, is_demo, verification_source, last_verified_date
-      ) VALUES (
-        @name, @slug, @description, @network, @format, @interview_style, @geo_reach,
-        @country, @state, @city, @location, @cultural_focus, @audience_desc,
-        @reach_estimate, @accepts_guests, @guest_submission_url, @public_contact,
-        @has_video, @artwork_url, @website_url, 1, @verification_source, @last_verified_date
-      )
-    `);
-    const insertPodcastSubject = db.prepare(
-      'INSERT INTO podcast_subjects (podcast_id, subject_id, is_primary) VALUES (?, ?, ?)'
-    );
-    const insertAudience = db.prepare(
-      'INSERT INTO podcast_audiences (podcast_id, audience) VALUES (?, ?)'
-    );
-    const insertEpisode = db.prepare(
-      'INSERT INTO episodes (podcast_id, title, description, published_at) VALUES (?, ?, ?, ?)'
-    );
-
-    for (const p of PODCASTS) {
-      const info = insertPodcast.run(p);
-      const podcastId = info.lastInsertRowid;
-
-      for (const [slug, isPrimary] of p.subjects) {
-        const subjectId = subjectIdBySlug.get(slug);
-        insertPodcastSubject.run(podcastId, subjectId, isPrimary ? 1 : 0);
-      }
-      for (const audience of p.audiences) insertAudience.run(podcastId, audience);
-      for (const ep of p.episodes) insertEpisode.run(podcastId, ep.title, ep.description, ep.published_at);
-    }
-  });
-
-  tx();
+  db.exec('BEGIN');
+  try {
+    seedAll(db);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
   return { podcasts: PODCASTS.length, subjects: SUBJECTS.length };
+}
+
+function seedAll(db) {
+  const insertSubject = db.prepare('INSERT OR IGNORE INTO subjects (slug, name) VALUES (?, ?)');
+  for (const s of SUBJECTS) insertSubject.run(s.slug, s.name);
+
+  const insertRelation = db.prepare(
+    'INSERT OR IGNORE INTO subject_relations (subject_slug, related_slug, weight) VALUES (?, ?, ?)'
+  );
+  for (const [from, to, weight] of SUBJECT_RELATIONS) insertRelation.run(from, to, weight);
+
+  const subjectIdBySlug = new Map(
+    db.prepare('SELECT id, slug FROM subjects').all().map((r) => [r.slug, r.id])
+  );
+
+  const insertPodcast = db.prepare(`
+    INSERT INTO podcasts (
+      name, slug, description, network, format, interview_style, geo_reach,
+      country, state, city, location, cultural_focus, audience_desc,
+      reach_estimate, accepts_guests, guest_submission_url, public_contact,
+      has_video, artwork_url, website_url, is_demo, verification_source, last_verified_date
+    ) VALUES (
+      @name, @slug, @description, @network, @format, @interview_style, @geo_reach,
+      @country, @state, @city, @location, @cultural_focus, @audience_desc,
+      @reach_estimate, @accepts_guests, @guest_submission_url, @public_contact,
+      @has_video, @artwork_url, @website_url, 1, @verification_source, @last_verified_date
+    )
+  `);
+  const insertPodcastSubject = db.prepare(
+    'INSERT INTO podcast_subjects (podcast_id, subject_id, is_primary) VALUES (?, ?, ?)'
+  );
+  const insertAudience = db.prepare(
+    'INSERT INTO podcast_audiences (podcast_id, audience) VALUES (?, ?)'
+  );
+  const insertEpisode = db.prepare(
+    'INSERT INTO episodes (podcast_id, title, description, published_at) VALUES (?, ?, ?, ?)'
+  );
+
+  for (const p of PODCASTS) {
+    // node:sqlite's named-parameter binding rejects object keys the SQL
+    // doesn't reference, unlike better-sqlite3 which ignores them — so
+    // subjects/audiences/episodes have to be stripped before binding.
+    const { subjects, audiences, episodes, ...podcastColumns } = p;
+    const info = insertPodcast.run(podcastColumns);
+    const podcastId = info.lastInsertRowid;
+
+    for (const [slug, isPrimary] of subjects) {
+      const subjectId = subjectIdBySlug.get(slug);
+      insertPodcastSubject.run(podcastId, subjectId, isPrimary ? 1 : 0);
+    }
+    for (const audience of audiences) insertAudience.run(podcastId, audience);
+    for (const ep of episodes) insertEpisode.run(podcastId, ep.title, ep.description, ep.published_at);
+  }
 }
 
 module.exports = { run, SUBJECTS, SUBJECT_RELATIONS, PODCASTS };

@@ -4,11 +4,8 @@
   functions = "netlify/functions"
 
 [functions]
-  # better-sqlite3 ships a compiled native .node binary; esbuild can't
-  # inline that, so it has to be copied into the function bundle as-is
-  # rather than bundled. schema.sql is read via fs.readFileSync (not
-  # require()), so it needs to be listed explicitly too.
-  external_node_modules = ["better-sqlite3", "bcryptjs", "jsonwebtoken", "cors", "express", "serverless-http"]
+  # schema.sql is read via fs.readFileSync (not require()), so static
+  # analysis won't pick it up on its own — list it explicitly.
   included_files = ["server/db/schema.sql"]
 
 [[redirects]]
