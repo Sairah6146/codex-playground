@@ -1,14 +1,22 @@
 {
-  "name": "codex-playground",
-  "version": "1.0.0",
-  "description": "First Agent",
-  "main": "src/server.js",
+  "name": "podcast-connect",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Podcast discovery and guest-matching platform — MVP with search and match scoring.",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "test": "node --test"
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "seed:reset": "rm -f server/db/podcast_connect.db* && node -e \"require('./server/db').getDb()\"",
+    "test:engine": "node server/test-engine.js",
+    "client:dev": "cd client && npm run dev",
+    "client:build": "cd client && npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
 }
