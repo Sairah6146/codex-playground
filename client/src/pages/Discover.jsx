@@ -46,10 +46,36 @@ export default function Discover() {
     setSelectedSubjects((prev) => prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]);
   }
 
+  // What to hand Apple's directory search for the current mode/input, so a
+  // signed-in search can also pull in matching real shows (see runSearch).
+  function currentSearchTerm() {
+    if (mode === 'subject') {
+      return selectedSubjects
+        .map((slug) => subjects.find((s) => s.slug === slug)?.name)
+        .filter(Boolean)
+        .join(' ');
+    }
+    return text.trim();
+  }
+
   async function runSearch(e) {
     if (e) e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Signed-in users searching for something real: pull in matching real
+    // podcasts first (best-effort — a live-fetch hiccup shouldn't block the
+    // search itself), then search the now-updated catalog.
+    const importTerm = currentSearchTerm();
+    if (user && importTerm) {
+      try {
+        await api.importPodcasts(importTerm, 5);
+      } catch {
+        // Live source may be down or return nothing for this term — the
+        // search below still runs against whatever's already in the catalog.
+      }
+    }
+
     try {
       const params = {
         reach: filters.reach, format: filters.format, audienceType: filters.audienceType,
@@ -138,12 +164,24 @@ export default function Discover() {
           />
         )}
         <button className="btn btn-primary" type="submit" disabled={loading}>
-          {loading ? 'Searching…' : 'Search'}
+          {loading ? (user && currentSearchTerm() ? 'Searching (incl. real podcasts)…' : 'Searching…') : 'Search'}
         </button>
         <button type="button" className="btn" onClick={() => setShowFilters((v) => !v)}>
           Filters
         </button>
       </form>
+
+      {user ? (
+        <p className="hint" style={{ marginBottom: 12 }}>
+          Signed in: each search also pulls in real, verified podcasts matching your query
+          from Apple's directory (a few seconds slower — real shows may be thin for very
+          specific or combined topics).
+        </p>
+      ) : (
+        <p className="hint" style={{ marginBottom: 12 }}>
+          Sign in to have search also pull in real podcasts, not just demo data.
+        </p>
+      )}
 
       {user && profile && (profile.target_subjects?.length > 0 || profile.target_audiences?.length > 0) && (
         <p className="hint" style={{ marginBottom: 12 }}>
