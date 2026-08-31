@@ -127,9 +127,32 @@ subjects, audience, cultural fit, geography, episode text, and network.
 
 The schema and services are built to hold real, verified podcast records: each
 podcast carries a `verification_source` and `last_verified_date`, and only
-public contact fields are stored. Wiring in a real ingestion source (a podcast
-index API or a vetted import) is the natural next step and does not require
-changes to the match engine.
+public contact fields are stored.
+
+That ingestion source is wired in: `POST /api/admin/import-podcasts` (signed-in
+users only) pulls real shows from Apple's public Podcasts directory plus each
+show's own RSS feed for recent episodes, and inserts them with `is_demo = 0`.
+
+```bash
+curl -X POST http://localhost:4000/api/admin/import-podcasts \
+  -H "Authorization: Bearer <your JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{"term": "artificial intelligence", "limit": 5}'
+```
+
+It deliberately doesn't invent fields the source doesn't provide — geography,
+audience, culture, and guest-openness are left unset on imported shows rather
+than guessed, since matchEngine already treats missing data as neutral instead
+of penalizing it (see *The match engine* above). Outbound fetches to feed URLs
+go through `server/lib/safeFetch.js`, which resolves and rejects private/
+internal addresses and refuses to follow redirects, since feed URLs originate
+from a public directory rather than our own code.
+
+One caveat on the current deployment: imported podcasts live in the same
+per-instance SQLite file as everything else, which resets on a serverless
+cold start — durable, cross-restart storage for a growing real catalog would
+need a persistent database (e.g. Postgres) in place of the current per-request
+file, which is a bigger change than this build takes on.
 
 ---
 

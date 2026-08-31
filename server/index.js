@@ -9,6 +9,7 @@ const { getDb } = require('./db');
 const searchService = require('./searchService');
 const { computeMatch, band } = require('./matchEngine');
 const { hashPassword, comparePassword, signToken, requireAuth, optionalAuth } = require('./lib/auth');
+const { importPodcasts } = require('./podcastImport');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -291,6 +292,23 @@ app.post('/api/campaigns', requireAuth, (req, res) => {
   const info = db.prepare('INSERT INTO campaigns (user_id, name, description) VALUES (?, ?, ?)')
     .run(req.userId, name, description || null);
   res.status(201).json({ id: info.lastInsertRowid });
+});
+
+// ---------------------------------------------------------------------------
+// Real-data ingestion (see README > About the data)
+// ---------------------------------------------------------------------------
+
+// Pulls real podcasts from Apple's public directory + their RSS feeds and
+// adds them to the catalog (is_demo = 0). Gated behind requireAuth since it
+// triggers outbound server-side fetches; safeFetch further guards those
+// against SSRF (see server/lib/safeFetch.js).
+app.post('/api/admin/import-podcasts', requireAuth, async (req, res) => {
+  try {
+    const result = await importPodcasts(db, req.body || {});
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Import failed.' });
+  }
 });
 
 // ---------------------------------------------------------------------------

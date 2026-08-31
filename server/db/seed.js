@@ -9,6 +9,8 @@
  * cultural fit, geography (local + international), episode text, and network.
  */
 
+const { insertPodcastRecords } = require('./podcastStore');
+
 function daysAgo(n) {
   return new Date(Date.now() - n * 86400000).toISOString();
 }
@@ -287,48 +289,7 @@ function seedAll(db) {
   );
   for (const [from, to, weight] of SUBJECT_RELATIONS) insertRelation.run(from, to, weight);
 
-  const subjectIdBySlug = new Map(
-    db.prepare('SELECT id, slug FROM subjects').all().map((r) => [r.slug, r.id])
-  );
-
-  const insertPodcast = db.prepare(`
-    INSERT INTO podcasts (
-      name, slug, description, network, format, interview_style, geo_reach,
-      country, state, city, location, cultural_focus, audience_desc,
-      reach_estimate, accepts_guests, guest_submission_url, public_contact,
-      has_video, artwork_url, website_url, is_demo, verification_source, last_verified_date
-    ) VALUES (
-      @name, @slug, @description, @network, @format, @interview_style, @geo_reach,
-      @country, @state, @city, @location, @cultural_focus, @audience_desc,
-      @reach_estimate, @accepts_guests, @guest_submission_url, @public_contact,
-      @has_video, @artwork_url, @website_url, 1, @verification_source, @last_verified_date
-    )
-  `);
-  const insertPodcastSubject = db.prepare(
-    'INSERT INTO podcast_subjects (podcast_id, subject_id, is_primary) VALUES (?, ?, ?)'
-  );
-  const insertAudience = db.prepare(
-    'INSERT INTO podcast_audiences (podcast_id, audience) VALUES (?, ?)'
-  );
-  const insertEpisode = db.prepare(
-    'INSERT INTO episodes (podcast_id, title, description, published_at) VALUES (?, ?, ?, ?)'
-  );
-
-  for (const p of PODCASTS) {
-    // node:sqlite's named-parameter binding rejects object keys the SQL
-    // doesn't reference, unlike better-sqlite3 which ignores them — so
-    // subjects/audiences/episodes have to be stripped before binding.
-    const { subjects, audiences, episodes, ...podcastColumns } = p;
-    const info = insertPodcast.run(podcastColumns);
-    const podcastId = info.lastInsertRowid;
-
-    for (const [slug, isPrimary] of subjects) {
-      const subjectId = subjectIdBySlug.get(slug);
-      insertPodcastSubject.run(podcastId, subjectId, isPrimary ? 1 : 0);
-    }
-    for (const audience of audiences) insertAudience.run(podcastId, audience);
-    for (const ep of episodes) insertEpisode.run(podcastId, ep.title, ep.description, ep.published_at);
-  }
+  insertPodcastRecords(db, PODCASTS.map((p) => ({ ...p, is_demo: 1 })));
 }
 
 module.exports = { run, SUBJECTS, SUBJECT_RELATIONS, PODCASTS };
