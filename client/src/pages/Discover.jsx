@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { useApp } from '../store.jsx';
 import ResultCard from '../components/ResultCard.jsx';
+import ImportPanel from '../components/ImportPanel.jsx';
 
 const MODES = [
   { key: 'natural', label: 'Describe what you want' },
@@ -98,6 +99,8 @@ export default function Discover() {
         <h1>Discover podcasts</h1>
         <p>Search six ways, then let the match engine rank what's worth your time.</p>
       </div>
+
+      {user && <ImportPanel onImported={() => runSearch()} />}
 
       <div className="mode-tabs">
         {MODES.map((m) => (

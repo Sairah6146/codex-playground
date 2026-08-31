@@ -65,4 +65,6 @@ export const api = {
   addToPipeline: (podcastId, stage, notes) => post('/pipeline', { podcastId, stage, notes }),
   updatePipelineItem: (id, patch) => put(`/pipeline/${id}`, patch),
   removeFromPipeline: (id) => del(`/pipeline/${id}`),
+
+  importPodcasts: (term, limit) => post('/admin/import-podcasts', { term, limit }),
 };
