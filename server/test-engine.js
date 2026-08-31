@@ -101,6 +101,15 @@ console.log('\n10) Natural language: "AI podcast for startup founders"');
   check('The Algorithm Age ranks first', topSlug(results) === 'algorithm-age', `got ${topSlug(results)}`);
 }
 
+console.log('\n11) Combined multi-concept: "African-American churches interested in artificial intelligence"');
+{
+  const { results, parsed } = searchService.search(db, { q: 'African-American churches interested in artificial intelligence' });
+  check('Parsed the religion subject', parsed.subjects.includes('religion-and-faith'), parsed.subjects.join(', '));
+  check('Parsed the AI subject', parsed.subjects.includes('artificial-intelligence'), parsed.subjects.join(', '));
+  check('Parsed the African-American culture', parsed.culture === 'african-american', String(parsed.culture));
+  check('Faith & Future ranks first', topSlug(results) === 'faith-and-future', `got ${topSlug(results)}`);
+}
+
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) failed.`}`);
 process.exit(failures === 0 ? 0 : 1);
 

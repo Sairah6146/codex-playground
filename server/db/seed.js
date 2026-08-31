@@ -26,6 +26,7 @@ const SUBJECTS = [
   { slug: 'business-and-entrepreneurship', name: 'Business & Entrepreneurship' },
   { slug: 'parenting-and-family', name: 'Parenting & Family' },
   { slug: 'technology-and-startups', name: 'Technology & Startups' },
+  { slug: 'religion-and-faith', name: 'Religion & Faith' },
 ];
 
 // Directed edges; matchEngine reads both directions since searches can start
@@ -45,6 +46,8 @@ const SUBJECT_RELATIONS = [
   ['relationships-dating', 'parenting-and-family', 0.6],
   ['business-and-entrepreneurship', 'technology-and-startups', 0.6],
   ['technology-and-startups', 'business-and-entrepreneurship', 0.6],
+  ['religion-and-faith', 'community-leadership', 0.5],
+  ['community-leadership', 'religion-and-faith', 0.5],
 ];
 
 const PODCASTS = [
@@ -264,6 +267,33 @@ const PODCASTS = [
     episodes: [
       { title: 'Mental Health Across Cultures', description: 'Health and wellness practices that travel, and ones that do not.', published_at: daysAgo(8) },
       { title: 'Movement as Medicine', description: 'Low-cost ways to build activity into daily life.', published_at: daysAgo(33) },
+    ],
+  },
+  {
+    slug: 'faith-and-future',
+    name: 'Faith & Future',
+    description: 'Black church leaders on ministry, community, and the technology reshaping both — from AI-written sermons to algorithm-driven outreach.',
+    network: 'Beacon Faith Media',
+    format: 'interview',
+    interview_style: 'thoughtful',
+    geo_reach: 'national',
+    country: 'United States', state: null, city: null, location: 'United States',
+    cultural_focus: 'African-American church and community life',
+    audience_desc: 'pastors and church leaders',
+    reach_estimate: 17000,
+    accepts_guests: 1,
+    guest_submission_url: 'https://faithandfuture.example.com/guests',
+    public_contact: null,
+    has_video: 0,
+    artwork_url: null,
+    website_url: 'https://faithandfuture.example.com',
+    verification_source: 'Publisher-submitted',
+    last_verified_date: daysAgo(6),
+    subjects: [['religion-and-faith', true], ['artificial-intelligence', false]],
+    audiences: ['pastors', 'church leaders', 'ministry staff'],
+    episodes: [
+      { title: 'Can a Church Use AI Without Losing Its Soul?', description: 'Algorithms in outreach, sermon prep, and the line congregations are drawing.', published_at: daysAgo(9) },
+      { title: 'The Deacon Board Meets the Data Team', description: 'How one congregation built a volunteer scheduling tool instead of buying one.', published_at: daysAgo(60) },
     ],
   },
 ];

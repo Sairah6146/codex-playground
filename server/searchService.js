@@ -46,6 +46,16 @@ const SUBJECT_ALIASES = {
   'technology': 'technology-and-startups',
   'parenting': 'parenting-and-family',
   'family': 'parenting-and-family',
+  'church': 'religion-and-faith',
+  'churches': 'religion-and-faith',
+  'congregation': 'religion-and-faith',
+  'congregations': 'religion-and-faith',
+  'religion': 'religion-and-faith',
+  'religious': 'religion-and-faith',
+  'faith': 'religion-and-faith',
+  'spirituality': 'religion-and-faith',
+  'christian': 'religion-and-faith',
+  'ministry': 'religion-and-faith',
 };
 
 // Free-text audience hints -> the audience phrase used in podcast_audiences.

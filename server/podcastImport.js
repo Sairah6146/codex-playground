@@ -36,6 +36,12 @@ const GENRE_TO_SUBJECT = {
   'parenting': 'parenting-and-family',
   'kids & family': 'parenting-and-family',
   'relationships': 'relationships-dating',
+  'religion & spirituality': 'religion-and-faith',
+  'christianity': 'religion-and-faith',
+  'islam': 'religion-and-faith',
+  'judaism': 'religion-and-faith',
+  'buddhism': 'religion-and-faith',
+  'spirituality': 'religion-and-faith',
 };
 
 const norm = (s) => (s || '').toLowerCase().trim();
