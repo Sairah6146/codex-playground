@@ -3,6 +3,14 @@
   publish = "client/dist"
   functions = "netlify/functions"
 
+[functions]
+  # better-sqlite3 ships a compiled native .node binary; esbuild can't
+  # inline that, so it has to be copied into the function bundle as-is
+  # rather than bundled. schema.sql is read via fs.readFileSync (not
+  # require()), so it needs to be listed explicitly too.
+  external_node_modules = ["better-sqlite3", "bcryptjs", "jsonwebtoken", "cors", "express", "serverless-http"]
+  included_files = ["server/db/schema.sql"]
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
