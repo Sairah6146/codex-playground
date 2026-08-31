@@ -108,6 +108,13 @@ export default function Discover() {
     }
   }
 
+  function clearSearch() {
+    setText('');
+    setSelectedSubjects([]);
+    setResults(null);
+    setError('');
+  }
+
   function useMyTargets() {
     if (!profile) return;
     if (profile.target_subjects?.length) {
@@ -169,6 +176,11 @@ export default function Discover() {
         <button type="button" className="btn" onClick={() => setShowFilters((v) => !v)}>
           Filters
         </button>
+        {((results && results.length > 0) || text || selectedSubjects.length > 0) && (
+          <button type="button" className="btn" onClick={clearSearch}>
+            Clear
+          </button>
+        )}
       </form>
 
       {user ? (
