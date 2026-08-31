@@ -10,12 +10,13 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "seed:reset": "rm -f server/db/podcast_connect.db* && node -e \"require('./server/db').getDb()\"",
+    "seed:reset": "rm -f server/db/podcast_connect.db* && node -e \"require('./server/db').getDb().then(() => process.exit(0))\"",
     "test:engine": "node server/test-engine.js",
     "client:dev": "cd client && npm run dev",
     "client:build": "cd client && npm run build"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.0.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",

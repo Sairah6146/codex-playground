@@ -9,7 +9,6 @@
 const { getDb } = require('./db');
 const searchService = require('./searchService');
 
-const db = getDb();
 let failures = 0;
 
 function check(label, condition, detail) {
@@ -28,6 +27,10 @@ function topSlug(results) {
 function slugs(results) {
   return results.map((r) => r.slug);
 }
+
+(async () => {
+
+const db = await getDb();
 
 console.log('Podcast Connect — match engine smoke test\n');
 
@@ -100,3 +103,5 @@ console.log('\n10) Natural language: "AI podcast for startup founders"');
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) failed.`}`);
 process.exit(failures === 0 ? 0 : 1);
+
+})();

@@ -5,7 +5,7 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 
-const { getDb } = require('./db');
+const { getDb, persistDb } = require('./db');
 const searchService = require('./searchService');
 const { computeMatch, band } = require('./matchEngine');
 const { hashPassword, comparePassword, signToken, requireAuth, optionalAuth } = require('./lib/auth');
@@ -13,10 +13,30 @@ const { importPodcasts } = require('./podcastImport');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const db = getDb();
+
+// Route handlers below reference `db` as a plain synchronous DatabaseSync
+// instance (unchanged from before persistence was added) — it's safe to do
+// so because both the local app.listen() call and the Netlify function
+// wrapper (netlify/functions/api.js) await `dbReady`/`app.ready` before any
+// request actually reaches a route.
+let db = null;
+const dbReady = getDb().then((instance) => { db = instance; });
 
 app.use(cors());
 app.use(express.json());
+
+// Persist to Netlify Blobs after any request that changed the database, so
+// accounts/saves/pipeline/imported podcasts survive the next cold start.
+// No-op outside a Netlify Function (see server/db/persist.js).
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'DELETE']);
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (MUTATING_METHODS.has(req.method) && res.statusCode < 400) {
+      persistDb().catch(() => {});
+    }
+  });
+  next();
+});
 
 function asArray(v) {
   if (v == null) return [];
@@ -329,12 +349,15 @@ if (fs.existsSync(clientDist)) {
 app.use((req, res) => res.status(404).json({ error: 'Not found.' }));
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Podcast Connect API listening on http://localhost:${PORT}`);
-    if (!fs.existsSync(clientDist)) {
-      console.log('Client build not found — run `npm run client:build` or `npm run client:dev` for the UI.');
-    }
+  dbReady.then(() => {
+    app.listen(PORT, () => {
+      console.log(`Podcast Connect API listening on http://localhost:${PORT}`);
+      if (!fs.existsSync(clientDist)) {
+        console.log('Client build not found — run `npm run client:build` or `npm run client:dev` for the UI.');
+      }
+    });
   });
 }
 
 module.exports = app;
+module.exports.ready = dbReady;

@@ -148,11 +148,13 @@ go through `server/lib/safeFetch.js`, which resolves and rejects private/
 internal addresses and refuses to follow redirects, since feed URLs originate
 from a public directory rather than our own code.
 
-One caveat on the current deployment: imported podcasts live in the same
-per-instance SQLite file as everything else, which resets on a serverless
-cold start — durable, cross-restart storage for a growing real catalog would
-need a persistent database (e.g. Postgres) in place of the current per-request
-file, which is a bigger change than this build takes on.
+On the deployed build, the SQLite file itself is backed by Netlify Blobs
+(`server/db/persist.js`): it's restored before the first request on a cold
+start and saved back after any request that changes data, so accounts,
+saved podcasts, pipeline items, and imported real podcasts all survive
+across restarts and deploys. Outside Netlify (local dev) this is a no-op —
+Blobs has no ambient configuration there, so the database stays exactly as
+ephemeral as it always was locally, which was never the problem.
 
 ---
 

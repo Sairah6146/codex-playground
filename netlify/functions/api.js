@@ -17,7 +17,8 @@ const rawHandler = serverless(app);
 // path (see the /api/* redirect in netlify.toml); the Express app's routes
 // are all defined as "/api/...". Rewrite the prefix so they match, instead
 // of duplicating every route under two prefixes.
-module.exports.handler = (event, context) => {
+module.exports.handler = async (event, context) => {
+  await app.ready; // DB restore-from-blob completes before the first route runs
   event.path = event.path.replace(/^\/\.netlify\/functions\/api/, '/api');
   return rawHandler(event, context);
 };
